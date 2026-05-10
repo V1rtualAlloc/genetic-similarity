@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>G25 Cosine Similarity Tool</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        textarea { width: 100%; height: 150px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+    <h2>G25 Cosine Similarity Calculator</h2>
+    <p>Paste G25 coordinates (one per line):</p>
+    <textarea id="inputData" placeholder="Germanic,0.123,0.130...&#10;Celtic,0.127,0.134..."></textarea>
+    <br><button onclick="calculate()">Analyze Pairs</button>
+
+    <table id="resultTable" style="display:none;">
+        <thead><tr><th>Pair</th><th>Similarity Score</th></tr></thead>
+        <tbody id="results"></tbody>
+    </table>
+
+    <script>
+        function dotProduct(a, b) { return a.reduce((sum, ai, i) => sum + ai * b[i], 0); }
+        function magnitude(a) { return Math.sqrt(a.reduce((sum, val) => sum + val * val, 0)); }
+        
+        function calculate() {
+            const input = document.getElementById('inputData').value.trim();
+            const lines = input.split('\n');
+            const pops = lines.map(line => {
+                const parts = line.split(',');
+                return { name: parts[0], vec: parts.slice(1).map(Number) };
+            });
+
+            let results = [];
+            for (let i = 0; i < pops.length; i++) {
+                for (let j = i + 1; j < pops.length; j++) {
+                    const sim = dotProduct(pops[i].vec, pops[j].vec) / (magnitude(pops[i].vec) * magnitude(pops[j].vec));
+                    results.push({ pair: `${pops[i].name} & ${pops[j].name}`, score: sim });
+                }
+            }
+
+            results.sort((a, b) => b.score - a.score);
+            
+            const tbody = document.getElementById('results');
+            tbody.innerHTML = results.map(r => `<tr><td>${r.pair}</td><td>${r.score.toFixed(6)}</td></tr>`).join('');
+            document.getElementById('resultTable').style.display = 'table';
+        }
+    </script>
+</body>
+</html>

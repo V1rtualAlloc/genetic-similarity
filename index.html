@@ -4,20 +4,70 @@
     <meta charset="UTF-8">
     <title>G25 Cosine Similarity Tool</title>
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-        textarea { width: 100%; height: 150px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1.5rem; line-height: 1.6; color: #333; }
+        textarea { width: 100%; height: 180px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1rem; margin-top: 10px; }
+        button:hover { background-color: #0056b3; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f8f9fa; }
+        .guide { background: #f1f3f5; padding: 1.5rem; border-left: 5px solid #007bff; margin-bottom: 2rem; border-radius: 0 4px 4px 0; }
+        .threshold-table { font-size: 0.9rem; margin-top: 10px; }
+        code { background: #e9ecef; padding: 2px 4px; border-radius: 4px; }
     </style>
 </head>
 <body>
     <h2>G25 Cosine Similarity Calculator</h2>
-    <p>Paste G25 coordinates (one per line):</p>
-    <textarea id="inputData" placeholder="Germanic,0.123,0.130...&#10;Celtic,0.127,0.134..."></textarea>
-    <br><button onclick="calculate()">Analyze Pairs</button>
+
+    <div class="guide">
+        <h3>Interpreting the Scores</h3>
+        <p>Cosine similarity measures the <strong>direction</strong> of genetic drift between two populations in 25-dimensional space. Unlike Euclidean distance, it is less sensitive to the absolute magnitude of the components and focuses on the "ancestral vector."</p>
+        
+        <table class="threshold-table">
+            <thead>
+                <tr>
+                    <th>Score</th>
+                    <th>Meaning</th>
+                    <th>G25 Context</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>+1.0</strong></td>
+                    <td>Perfectly Similar</td>
+                    <td>Identical genetic direction; essentially the same population.</td>
+                </tr>
+                <tr>
+                    <td><strong>0.99+</strong></td>
+                    <td>Very Close</td>
+                    <td>Highly related groups (e.g., Germanic vs. Celtic). Consider merging labels.</td>
+                </tr>
+                <tr>
+                    <td><strong>0.0</strong></td>
+                    <td>Orthogonal</td>
+                    <td>No shared directional relationship; genetically independent vectors.</td>
+                </tr>
+                <tr>
+                    <td><strong>-1.0</strong></td>
+                    <td>Polar Opposites</td>
+                    <td>Inverse genetic profiles (e.g., pure Northern European vs. pure East Asian).</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><small><em>Note: In G25 data, scores below 0 are rare unless comparing vastly different continental poles (like Huns vs. Phoenicians).</em></small></p>
+    </div>
+
+    <p>Paste your G25 coordinates here (format: <code>Label,0.123,0.456...</code>):</p>
+    <textarea id="inputData" placeholder="Germanic,0.123926,0.130753...&#10;Celtic,0.127028,0.134841..."></textarea>
+    <br><button onclick="calculate()">Analyze All Pairs</button>
 
     <table id="resultTable" style="display:none;">
-        <thead><tr><th>Pair</th><th>Similarity Score</th></tr></thead>
+        <thead>
+            <tr>
+                <th>Comparison Pair</th>
+                <th>Cosine Similarity Score</th>
+            </tr>
+        </thead>
         <tbody id="results"></tbody>
     </table>
 
@@ -27,6 +77,8 @@
         
         function calculate() {
             const input = document.getElementById('inputData').value.trim();
+            if (!input) return;
+
             const lines = input.split('\n');
             const pops = lines.map(line => {
                 const parts = line.split(',');
@@ -36,8 +88,9 @@
             let results = [];
             for (let i = 0; i < pops.length; i++) {
                 for (let j = i + 1; j < pops.length; j++) {
-                    const sim = dotProduct(pops[i].vec, pops[j].vec) / (magnitude(pops[i].vec) * magnitude(pops[j].vec));
-                    results.push({ pair: `${pops[i].name} & ${pops[j].name}`, score: sim });
+                    const magProd = magnitude(pops[i].vec) * magnitude(pops[j].vec);
+                    const sim = magProd === 0 ? 0 : dotProduct(pops[i].vec, pops[j].vec) / magProd;
+                    results.push({ pair: `<strong>${pops[i].name}</strong> vs <strong>${pops[j].name}</strong>`, score: sim });
                 }
             }
 

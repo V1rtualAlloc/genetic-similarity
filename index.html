@@ -192,15 +192,21 @@
         let results = [];
 
         if (currentMode === 'pairwise') {
-            const pops = parse(document.getElementById('dataAll').value);
+            const dataInput = document.getElementById('dataAll').value;
+            if (!dataInput.trim()) return;
+            const pops = parse(dataInput);
             for (let i = 0; i < pops.length; i++) {
                 for (let j = i + 1; j < pops.length; j++) {
                     results.push({ p1: pops[i].name, p2: pops[j].name, val: getMetric(pops[i].vec, pops[j].vec, metricType) });
                 }
             }
         } else {
-            const targets = parse(document.getElementById('dataTargets').value);
-            const sources = parse(document.getElementById('dataSources').value);
+            const targetInput = document.getElementById('dataTargets').value;
+            const sourceInput = document.getElementById('dataSources').value;
+            if (!targetInput.trim() || !sourceInput.trim()) return;
+            
+            const targets = parse(targetInput);
+            const sources = parse(sourceInput);
             targets.forEach(t => {
                 sources.forEach(s => {
                     results.push({ p1: t.name, p2: s.name, val: getMetric(t.vec, s.vec, metricType) });
@@ -208,10 +214,16 @@
             });
         }
 
-        const isDistance = metricType.includes('distance');
+        // FIXED SORTING LOGIC:
+        // 'euclidean' and 'manhattan' are distances (0 is closest) -> Sort Ascending
+        // 'cosine' and 'pearson' are similarities (1 is closest) -> Sort Descending
+        const isDistance = (metricType === 'euclidean' || metricType === 'manhattan');
+        
         results.sort((a, b) => isDistance ? a.val - b.val : b.val - a.val);
         
-        document.getElementById('metricHeader').innerText = isDistance ? 'Distance (Lower is Better)' : 'Similarity (Higher is Better)';
+        const headerText = isDistance ? 'Distance (Lower is Better)' : 'Similarity Score (Higher is Better)';
+        document.getElementById('metricHeader').innerText = headerText;
+        
         const tbody = document.getElementById('results');
         tbody.innerHTML = results.map(r => `<tr><td><strong>${r.p1}</strong> vs <strong>${r.p2}</strong></td><td>${r.val.toFixed(6)}</td></tr>`).join('');
         document.getElementById('resultTable').style.display = 'table';

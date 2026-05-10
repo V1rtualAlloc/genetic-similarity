@@ -2,104 +2,220 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>G25 Cosine Similarity Tool</title>
+    <title>G25 Multi-Metric Analysis Tool</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1.5rem; line-height: 1.6; color: #333; }
-        textarea { width: 100%; height: 180px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; }
-        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1rem; margin-top: 10px; }
-        button:hover { background-color: #0056b3; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background-color: #f8f9fa; }
-        .guide { background: #f1f3f5; padding: 1.5rem; border-left: 5px solid #007bff; margin-bottom: 2rem; border-radius: 0 4px 4px 0; }
-        .threshold-table { font-size: 0.9rem; margin-top: 10px; }
-        code { background: #e9ecef; padding: 2px 4px; border-radius: 4px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 1000px; margin: 2rem auto; padding: 0 1.5rem; line-height: 1.6; color: #333; background-color: #f4f7f9; }
+        .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        
+        /* Tabs */
+        .tab-container { margin-top: 20px; }
+        .tab-buttons { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 15px; }
+        .tab-btn { padding: 10px 20px; cursor: pointer; border: none; background: none; font-weight: bold; color: #666; transition: 0.2s; }
+        .tab-btn.active { color: #007bff; border-bottom: 3px solid #007bff; margin-bottom: -2px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        textarea { width: 100%; height: 180px; padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-family: 'Courier New', Courier, monospace; box-sizing: border-box; font-size: 0.9rem; margin-bottom: 10px; }
+        .half-width { display: flex; gap: 15px; }
+        .half-width div { flex: 1; }
+
+        .controls { margin-bottom: 25px; padding: 15px; background: #f8f9fa; border-radius: 6px; border: 1px solid #eee; }
+        select, button { padding: 12px 18px; border-radius: 4px; border: 1px solid #007bff; font-size: 1rem; transition: all 0.2s; }
+        select { background-color: white; cursor: pointer; width: 100%; max-width: 300px; }
+        .btn-container { text-align: right; margin-top: 10px; }
+        button { background-color: #007bff; color: white; cursor: pointer; border: none; font-weight: 600; min-width: 200px; }
+        button:hover { background-color: #0056b3; transform: translateY(-1px); }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 25px; background: #fff; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 0.95rem; }
+        th { background-color: #f8f9fa; font-weight: 700; color: #444; }
+        .guide-container { margin-bottom: 2rem; }
+        .metric-guide { display: none; background: #ffffff; padding: 1.5rem; border: 1px solid #e0e0e0; border-left: 6px solid #007bff; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .metric-guide.active { display: block; }
+        .ref-table { margin-top: 15px; font-size: 0.85rem; width: 100%; }
+        .ref-table th { background: #eee; }
+        h2 { color: #0056b3; margin-top: 0; }
+        h4 { margin: 0 0 10px 0; color: #007bff; font-size: 1.2rem; }
     </style>
 </head>
 <body>
-    <h2>G25 Cosine Similarity Calculator</h2>
 
-    <div class="guide">
-        <h3>Interpreting the Scores</h3>
-        <p>Cosine similarity measures the <strong>direction</strong> of genetic drift between two populations in 25-dimensional space. Unlike Euclidean distance, it is less sensitive to the absolute magnitude of the components and focuses on the "ancestral vector."</p>
-        
-        <table class="threshold-table">
-            <thead>
-                <tr>
-                    <th>Score</th>
-                    <th>Meaning</th>
-                    <th>G25 Context</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>+1.0</strong></td>
-                    <td>Perfectly Similar</td>
-                    <td>Identical genetic direction; essentially the same population.</td>
-                </tr>
-                <tr>
-                    <td><strong>0.99+</strong></td>
-                    <td>Very Close</td>
-                    <td>Highly related groups (e.g., Germanic vs. Celtic). Consider merging labels.</td>
-                </tr>
-                <tr>
-                    <td><strong>0.0</strong></td>
-                    <td>Orthogonal</td>
-                    <td>No shared directional relationship; genetically independent vectors.</td>
-                </tr>
-                <tr>
-                    <td><strong>-1.0</strong></td>
-                    <td>Polar Opposites</td>
-                    <td>Inverse genetic profiles (e.g., pure Northern European vs. pure East Asian).</td>
-                </tr>
-            </tbody>
-        </table>
-        <p><small><em>Note: In G25 data, scores below 0 are rare unless comparing vastly different continental poles (like Huns vs. Phoenicians).</em></small></p>
+<div class="container">
+    <h2>G25 Population Analyzer</h2>
+
+    <div class="controls">
+        <label for="metricSelect"><strong>Step 1: Select Analysis Metric</strong></label><br>
+        <select id="metricSelect" onchange="updateGuide()" style="margin-top: 8px;">
+            <option value="cosine">Cosine Similarity</option>
+            <option value="euclidean">Euclidean Distance</option>
+            <option value="manhattan">Manhattan Distance</option>
+            <option value="pearson">Pearson Correlation</option>
+        </select>
     </div>
 
-    <p>Paste your G25 coordinates here (format: <code>Label,0.123,0.456...</code>):</p>
-    <textarea id="inputData" placeholder="Germanic,0.123926,0.130753...&#10;Celtic,0.127028,0.134841..."></textarea>
-    <br><button onclick="calculate()">Analyze All Pairs</button>
+    <div class="guide-container">
+        <div id="guide-cosine" class="metric-guide active">
+            <h4>Metric: Cosine Similarity (The Compass)</h4>
+            <p>Measures the <strong>direction</strong> of genetic drift. Focuses on the "recipe" of ancestry.</p>
+            <table class="ref-table">
+                <tr><th>Score</th><th>Meaning</th><th>G25 Interpretation</th></tr>
+                <tr><td>1.000</td><td>Identical</td><td>Same population or immediate relatives.</td></tr>
+                <tr><td>0.995+</td><td>Very Close</td><td>Highly related (e.g., Serbian vs. Croatian).</td></tr>
+                <tr><td>0.980</td><td>Related</td><td>Broad regional similarity.</td></tr>
+            </table>
+        </div>
+
+        <div id="guide-euclidean" class="metric-guide">
+            <h4>Metric: Euclidean Distance (The Ruler)</h4>
+            <p>Measures the <strong>straight-line distance</strong>. Standard for G25 proximity checks.</p>
+            <table class="ref-table">
+                <tr><th>Distance</th><th>Meaning</th><th>G25 Interpretation</th></tr>
+                <tr><td>0.000</td><td>Identical</td><td>Perfect match.</td></tr>
+                <tr><td>< 0.025</td><td>Very Close</td><td>Standard within-population variation.</td></tr>
+                <tr><td>0.025 - 0.045</td><td>Close</td><td>Related regional populations.</td></tr>
+            </table>
+        </div>
+
+        <div id="guide-manhattan" class="metric-guide">
+            <h4>Metric: Manhattan Distance (The Taxi Cab)</h4>
+            <p>Sums absolute differences. Robust against large "noisy" outliers.</p>
+            <table class="ref-table">
+                <tr><th>Distance</th><th>Meaning</th><th>G25 Interpretation</th></tr>
+                <tr><td>0.000</td><td>Identical</td><td>Perfect match.</td></tr>
+                <tr><td>< 0.100</td><td>Very Close</td><td>Extremely high similarity.</td></tr>
+                <tr><td>0.100 - 0.250</td><td>Related</td><td>Sub-regional neighbors.</td></tr>
+            </table>
+        </div>
+
+        <div id="guide-pearson" class="metric-guide">
+            <h4>Metric: Pearson Correlation (The Rhythm)</h4>
+            <p>Measures how coordinates <strong>trend together</strong>. Finds matching peaks and valleys.</p>
+            <table class="ref-table">
+                <tr><th>Score</th><th>Meaning</th><th>G25 Interpretation</th></tr>
+                <tr><td>1.000</td><td>Perfect</td><td>Matching genetic patterns.</td></tr>
+                <tr><td>0.950+</td><td>Strong</td><td>Very high pattern correlation.</td></tr>
+                <tr><td>0.800 - 0.900</td><td>Moderate</td><td>Shared broad ancestry traits.</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="tab-container">
+        <strong>Step 2: Analysis Mode</strong>
+        <div class="tab-buttons">
+            <div class="tab-btn active" onclick="switchTab('pairwise')">Compare All Pairs</div>
+            <div class="tab-btn" onclick="switchTab('sourceTarget')">Source vs. Target</div>
+        </div>
+
+        <div id="pairwise" class="tab-content active">
+            <p>Paste coordinates. Every pair in the list will be compared against each other.</p>
+            <textarea id="dataAll" placeholder="Label,PC1,PC2..."></textarea>
+        </div>
+
+        <div id="sourceTarget" class="tab-content">
+            <p>Compare specific targets against a list of source populations.</p>
+            <div class="half-width">
+                <div>
+                    <label><strong>Targets (Your samples):</strong></label>
+                    <textarea id="dataTargets" placeholder="Target1,0.123...&#10;Target2,0.125..."></textarea>
+                </div>
+                <div>
+                    <label><strong>Sources (Reference list):</strong></label>
+                    <textarea id="dataSources" placeholder="SourceA,0.123...&#10;SourceB,0.124..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="btn-container">
+        <button onclick="runAnalysis()">Run Analysis</button>
+    </div>
 
     <table id="resultTable" style="display:none;">
         <thead>
             <tr>
                 <th>Comparison Pair</th>
-                <th>Cosine Similarity Score</th>
+                <th id="metricHeader">Score</th>
             </tr>
         </thead>
         <tbody id="results"></tbody>
     </table>
+</div>
 
-    <script>
-        function dotProduct(a, b) { return a.reduce((sum, ai, i) => sum + ai * b[i], 0); }
-        function magnitude(a) { return Math.sqrt(a.reduce((sum, val) => sum + val * val, 0)); }
-        
-        function calculate() {
-            const input = document.getElementById('inputData').value.trim();
-            if (!input) return;
+<script>
+    let currentMode = 'pairwise';
 
-            const lines = input.split('\n');
-            const pops = lines.map(line => {
-                const parts = line.split(',');
-                return { name: parts[0], vec: parts.slice(1).map(Number) };
-            });
+    function switchTab(mode) {
+        currentMode = mode;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.innerText.toLowerCase().includes(mode.toLowerCase())));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === mode));
+    }
 
-            let results = [];
+    function updateGuide() {
+        const metric = document.getElementById('metricSelect').value;
+        document.querySelectorAll('.metric-guide').forEach(g => g.classList.remove('active'));
+        document.getElementById('guide-' + metric).classList.add('active');
+    }
+
+    const dot = (a, b) => a.reduce((s, ai, i) => s + ai * b[i], 0);
+    const mag = (a) => Math.sqrt(dot(a, a));
+    const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;
+
+    function getMetric(v1, v2, type) {
+        if (type === 'cosine') {
+            const m = mag(v1) * mag(v2);
+            return m === 0 ? 0 : dot(v1, v2) / m;
+        }
+        if (type === 'euclidean') {
+            return Math.sqrt(v1.reduce((s, x, i) => s + Math.pow(x - v2[i], 2), 0));
+        }
+        if (type === 'manhattan') {
+            return v1.reduce((s, x, i) => s + Math.abs(x - v2[i]), 0);
+        }
+        if (type === 'pearson') {
+            const m1 = mean(v1), m2 = mean(v2);
+            const a = v1.map(x => x - m1), b = v2.map(x => x - m2);
+            const m = mag(a) * mag(b);
+            return m === 0 ? 0 : dot(a, b) / m;
+        }
+    }
+
+    function parse(text) {
+        return text.trim().split('\n').map(line => {
+            const p = line.split(',');
+            if (p.length < 2) return null;
+            return { name: p[0], vec: p.slice(1).map(Number) };
+        }).filter(x => x !== null);
+    }
+
+    function runAnalysis() {
+        const metricType = document.getElementById('metricSelect').value;
+        let results = [];
+
+        if (currentMode === 'pairwise') {
+            const pops = parse(document.getElementById('dataAll').value);
             for (let i = 0; i < pops.length; i++) {
                 for (let j = i + 1; j < pops.length; j++) {
-                    const magProd = magnitude(pops[i].vec) * magnitude(pops[j].vec);
-                    const sim = magProd === 0 ? 0 : dotProduct(pops[i].vec, pops[j].vec) / magProd;
-                    results.push({ pair: `<strong>${pops[i].name}</strong> vs <strong>${pops[j].name}</strong>`, score: sim });
+                    results.push({ p1: pops[i].name, p2: pops[j].name, val: getMetric(pops[i].vec, pops[j].vec, metricType) });
                 }
             }
-
-            results.sort((a, b) => b.score - a.score);
-            
-            const tbody = document.getElementById('results');
-            tbody.innerHTML = results.map(r => `<tr><td>${r.pair}</td><td>${r.score.toFixed(6)}</td></tr>`).join('');
-            document.getElementById('resultTable').style.display = 'table';
+        } else {
+            const targets = parse(document.getElementById('dataTargets').value);
+            const sources = parse(document.getElementById('dataSources').value);
+            targets.forEach(t => {
+                sources.forEach(s => {
+                    results.push({ p1: t.name, p2: s.name, val: getMetric(t.vec, s.vec, metricType) });
+                });
+            });
         }
-    </script>
+
+        const isDistance = metricType.includes('distance');
+        results.sort((a, b) => isDistance ? a.val - b.val : b.val - a.val);
+        
+        document.getElementById('metricHeader').innerText = isDistance ? 'Distance (Lower is Better)' : 'Similarity (Higher is Better)';
+        const tbody = document.getElementById('results');
+        tbody.innerHTML = results.map(r => `<tr><td><strong>${r.p1}</strong> vs <strong>${r.p2}</strong></td><td>${r.val.toFixed(6)}</td></tr>`).join('');
+        document.getElementById('resultTable').style.display = 'table';
+    }
+</script>
 </body>
 </html>
